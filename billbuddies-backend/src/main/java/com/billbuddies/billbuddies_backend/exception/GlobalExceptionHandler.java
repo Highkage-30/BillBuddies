@@ -49,4 +49,21 @@ public class GlobalExceptionHandler {
                         "Something went wrong. Please try again later."
                 ));
     }
+    @ExceptionHandler(MemberNotFoundException.class)
+    public ResponseEntity<ErrorResponseDto> handleMemberNotFound(
+            MemberNotFoundException ex
+    ) {
+        log.warn("MemberNotFoundException: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ErrorResponseDto(404, ex.getMessage()));
+    }
+
+    @ExceptionHandler(MemberNotInGroupException.class)
+    public ResponseEntity<ErrorResponseDto> handleMemberNotInGroup(
+            MemberNotInGroupException ex
+    ) {
+        log.warn("MemberNotInGroupException: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponseDto(400, ex.getMessage()));
+    }
 }

@@ -8,6 +8,7 @@ import com.billbuddies.billbuddies_backend.entity.GroupMemberId;
 import com.billbuddies.billbuddies_backend.entity.Member;
 import com.billbuddies.billbuddies_backend.exception.GroupNotFoundException;
 import com.billbuddies.billbuddies_backend.exception.MemberAlreadyInGroupException;
+import com.billbuddies.billbuddies_backend.exception.MemberNotFoundException;
 import com.billbuddies.billbuddies_backend.repository.GroupMemberRepository;
 import com.billbuddies.billbuddies_backend.repository.GroupRepository;
 import com.billbuddies.billbuddies_backend.repository.MemberRepository;
@@ -43,7 +44,7 @@ public class GroupMemberServiceImpl implements GroupMemberService {
             throw new GroupNotFoundException("Group not found for id: " + groupId);
         }
 
-        return groupMemberRepository.findByGroup_GroupId(groupId)
+        return groupMemberRepository.findByGroup_GroupIdOrderByMember_MemberNameAsc(groupId)
                 .stream()
                 .map(gm -> new GroupMemberResponseDto(
                         gm.getMember().getMemberName(),
@@ -114,5 +115,22 @@ public class GroupMemberServiceImpl implements GroupMemberService {
                 member.getMemberName(),
                 created ? "CREATED_AND_MAPPED" : "EXISTING_AND_MAPPED"
         );
+    }
+
+    @Override
+    @Transactional
+    public void removeMemberFromGroup(Long groupId, Long memberId) {
+        log.info("Removing member '{}' from groupId={}", memberId, groupId);
+        if(!groupRepository.existsById(groupId)) {
+            throw new GroupNotFoundException("Group not found for id: " + groupId);
+        }
+        if(!memberRepository.existsById(memberId)) {
+            throw new MemberNotFoundException("Member not found for id: " + memberId);
+        }
+        GroupMember groupMember=groupMemberRepository.findByGroup_GroupIdAndMember_MemberId(groupId,memberId)
+                .orElseThrow(() -> new MemberNotFoundException("Member not found in group for id: " + memberId));
+
+        groupMemberRepository.delete(groupMember);
+        log.info("MemberId={} removed from groupId={}", memberId, groupId);
     }
 }

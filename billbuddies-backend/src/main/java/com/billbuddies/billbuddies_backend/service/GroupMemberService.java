@@ -11,4 +11,6 @@ public interface GroupMemberService {
 
     AddMemberResponseDto addMemberToGroup(Long groupId, String memberName);
 
+    void removeMemberFromGroup(Long groupId, Long memberId);
+
 }

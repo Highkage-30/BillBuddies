@@ -33,4 +33,11 @@ public class GroupMemberController {
     ) {
         return groupMemberService.addMemberToGroup(groupId, request.getMemberName());
     }
+
+    @DeleteMapping("/groups/{groupId}/members/{memberId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public Void deleteMemberFromGroup(@PathVariable Long groupId, @PathVariable Long memberId) {
+        groupMemberService.removeMemberFromGroup(groupId, memberId);
+        return null;
+    }
 }
