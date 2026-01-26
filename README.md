@@ -42,9 +42,10 @@ Multiple expenses and splits are netted to calculate a **single net balance per 
 
 #### Before Netting: 
 <img width="721" height="362" alt="Untitled Diagram drawio (2)" src="https://github.com/user-attachments/assets/958e2fa6-35db-4fbf-be2b-300218b488fc" />
+
 #### After Netting: 
 <img width="721" height="361" alt="Untitled Diagram drawio (3)" src="https://github.com/user-attachments/assets/ddffee97-9b78-4bdf-8d76-1749b4816eb8" />
-
+---
 ---
 
 ## 🏗️ System Overview
