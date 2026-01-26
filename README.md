@@ -26,6 +26,11 @@ Novation is a legal and financial process where one party in a contract is repla
 All inter-member debts are novated to a **Central Counter Party (BillBuddy)**.  
 Members no longer owe each other directly — they owe or receive from BillBuddy.
 
+Before Novation:
+<img width="541" height="81" alt="Untitled Diagram drawio" src="https://github.com/user-attachments/assets/973508ed-4680-4460-a090-dae2b84dcd48" />
+After Novation: 
+<img width="801" height="81" alt="Untitled Diagram drawio (1)" src="https://github.com/user-attachments/assets/953e6030-e84d-4eb1-a022-7bc1e00922ab" />
+
 ---
 
 ### ➕ Netting
