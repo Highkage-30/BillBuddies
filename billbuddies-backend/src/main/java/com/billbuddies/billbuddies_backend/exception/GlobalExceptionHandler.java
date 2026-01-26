@@ -66,4 +66,41 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(new ErrorResponseDto(400, ex.getMessage()));
     }
+    @ExceptionHandler(GroupAlreadyExistsException.class)
+    public ResponseEntity<ErrorResponseDto> handleGroupAlreadyExists(
+            GroupAlreadyExistsException ex
+    ) {
+        log.warn("GroupAlreadyExistsException: {}", ex.getMessage());
+
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ErrorResponseDto(
+                        HttpStatus.CONFLICT.value(),
+                        ex.getMessage()
+                ));
+    }
+    @ExceptionHandler(CcpCannotBeAddedException.class)
+    public ResponseEntity<ErrorResponseDto> handleCcpCannotBeAdded(
+            CcpCannotBeAddedException ex) {
+
+        log.warn("CcpCannotBeAddedException handled: {}", ex.getMessage());
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponseDto(
+                        HttpStatus.BAD_REQUEST.value(),
+                        ex.getMessage()
+                ));
+    }
+
+    @ExceptionHandler(CcpCannotBeRemovedException.class)
+    public ResponseEntity<ErrorResponseDto> handleCcpCannotBeRemoved(
+            CcpCannotBeRemovedException ex) {
+
+        log.warn("CcpCannotBeRemovedException handled: {}", ex.getMessage());
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponseDto(
+                        HttpStatus.BAD_REQUEST.value(),
+                        ex.getMessage()
+                ));
+    }
 }

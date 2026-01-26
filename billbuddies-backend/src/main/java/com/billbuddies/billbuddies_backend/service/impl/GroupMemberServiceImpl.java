@@ -6,15 +6,15 @@ import com.billbuddies.billbuddies_backend.entity.Group;
 import com.billbuddies.billbuddies_backend.entity.GroupMember;
 import com.billbuddies.billbuddies_backend.entity.GroupMemberId;
 import com.billbuddies.billbuddies_backend.entity.Member;
-import com.billbuddies.billbuddies_backend.exception.GroupNotFoundException;
-import com.billbuddies.billbuddies_backend.exception.MemberAlreadyInGroupException;
-import com.billbuddies.billbuddies_backend.exception.MemberNotFoundException;
+import com.billbuddies.billbuddies_backend.exception.*;
 import com.billbuddies.billbuddies_backend.repository.GroupMemberRepository;
 import com.billbuddies.billbuddies_backend.repository.GroupRepository;
 import com.billbuddies.billbuddies_backend.repository.MemberRepository;
 import com.billbuddies.billbuddies_backend.service.GroupMemberService;
+import com.billbuddies.billbuddies_backend.util.NameNormalizer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +30,8 @@ public class GroupMemberServiceImpl implements GroupMemberService {
     private final GroupRepository groupRepository;
     private final MemberRepository memberRepository;
     private final GroupMemberRepository groupMemberRepository;
+    @Value("${centralCounterParty.name}")
+    private String CCP_NAME;
 
     /**
      * GET members of a group
@@ -61,7 +63,16 @@ public class GroupMemberServiceImpl implements GroupMemberService {
     public AddMemberResponseDto addMemberToGroup(Long groupId, String memberName) {
 
         log.info("Adding member '{}' to groupId={}", memberName, groupId);
+        String normalizedName =
+                NameNormalizer.capitalizeFirstLetter(memberName);
 
+        if (normalizedName.equalsIgnoreCase(CCP_NAME)) {
+            log.warn("Attempt to manually add CCP '{}' to groupId={}",
+                    CCP_NAME, groupId);
+            throw new CcpCannotBeAddedException(
+                    "Central Counter Party cannot be added manually"
+            );
+        }
         // 1️⃣ Validate group
         Group group = groupRepository.findById(groupId)
                 .orElseThrow(() ->
@@ -69,7 +80,6 @@ public class GroupMemberServiceImpl implements GroupMemberService {
                 );
 
         // 2️⃣ Normalize member name
-        String normalizedName = memberName.trim();
 
         // 3️⃣ Find or create member (NO lambda misuse)
         Member member;
@@ -124,8 +134,16 @@ public class GroupMemberServiceImpl implements GroupMemberService {
         if(!groupRepository.existsById(groupId)) {
             throw new GroupNotFoundException("Group not found for id: " + groupId);
         }
-        if(!memberRepository.existsById(memberId)) {
-            throw new MemberNotFoundException("Member not found for id: " + memberId);
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new MemberNotFoundException(
+                        "Member not found for id: " + memberId
+                ));
+        if (member.getMemberName().equalsIgnoreCase(CCP_NAME)) {
+            log.warn("Attempt to remove CCP '{}' from groupId={}",
+                    CCP_NAME, groupId);
+            throw new CcpCannotBeRemovedException(
+                    "Central Counter Party cannot be removed from the group"
+            );
         }
         GroupMember groupMember=groupMemberRepository.findByGroup_GroupIdAndMember_MemberId(groupId,memberId)
                 .orElseThrow(() -> new MemberNotFoundException("Member not found in group for id: " + memberId));

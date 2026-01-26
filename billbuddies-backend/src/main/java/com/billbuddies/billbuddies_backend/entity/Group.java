@@ -32,7 +32,7 @@ public class Group {
     private String groupName;
 
     @Column(name = "description")
-    private String description;
+    private String groupDescription;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
