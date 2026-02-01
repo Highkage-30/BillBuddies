@@ -1,0 +1,39 @@
+.group-members-container {
+  margin-top: 16px;
+}
+
+.group-member-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  background-color: #fff;
+}
+
+.member-name {
+  font-weight: 500;
+}
+
+.add-member-footer {
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-end;
+}
+.add-members-panel {
+  margin-top: 24px;
+  padding: 16px;
+  border-top: 2px solid #e0e0e0;
+}
+
+.add-members-panel h3 {
+  margin-bottom: 12px;
+}
+
+.add-members-footer {
+  margin-top: 12px;
+  display: flex;
+  justify-content: flex-end;
+}

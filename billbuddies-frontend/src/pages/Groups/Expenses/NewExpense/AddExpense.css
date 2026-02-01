@@ -1,0 +1,28 @@
+.add-expense-panel {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background-color: #ffffff;
+}
+
+.add-expense-header {
+  padding: 16px 20px;
+  border-bottom: 2px solid #bdbdbd;
+}
+
+.add-expense-row {
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  gap: 16px;
+  padding: 16px 20px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.add-expense-row label {
+  font-weight: 500;
+}
+
+.add-expense-footer {
+  padding: 16px 20px;
+  display: flex;
+  justify-content: flex-end;
+}

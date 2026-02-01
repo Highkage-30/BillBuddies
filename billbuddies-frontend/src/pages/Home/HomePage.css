@@ -1,0 +1,94 @@
+.home-page {
+  padding-top: 32px;
+  padding-bottom: 64px;
+}
+
+/* HERO */
+.home-hero {
+  padding: 48px 32px;
+  margin-bottom: 64px;
+
+  border-radius: 12px;
+  background: linear-gradient(
+    135deg,
+    #e3f2fd,
+    #ffffff
+  );
+}
+
+.home-title {
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.home-subtitle {
+  max-width: 850px;
+  font-size: 16px;
+  color: #444;
+}
+
+.home-hero-actions {
+  margin-top: 24px;
+  display: flex;
+  gap: 16px;
+}
+
+/* SECTIONS */
+.home-section {
+  margin-bottom: 56px;
+}
+
+.home-muted {
+  background-color: #fafafa;
+  padding: 32px;
+  border-radius: 8px;
+}
+
+.home-paragraph {
+  max-width: 900px;
+  color: #555;
+  margin-bottom: 12px;
+}
+
+/* FEATURES */
+.home-feature {
+  padding: 20px;
+  border-radius: 8px;
+  height: 100%;
+}
+
+.home-feature-icon {
+  color: #1976d2;
+  margin-bottom: 8px;
+}
+
+.home-feature-title {
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.home-feature-text {
+  color: #555;
+  font-size: 14.5px;
+}
+
+/* WORKFLOW */
+.home-steps {
+  padding-left: 20px;
+  color: #555;
+}
+
+.home-steps li {
+  margin-bottom: 6px;
+}
+
+/* FOOTER CTA */
+.home-footer-cta {
+  padding-top: 32px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.home-footer-text {
+  margin-top: 8px;
+  color: #555;
+}

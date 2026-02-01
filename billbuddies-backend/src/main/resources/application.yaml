@@ -1,0 +1,27 @@
+spring:
+  datasource:
+    driver-class-name: oracle.jdbc.OracleDriver
+    url: jdbc:oracle:thin:@localhost:1521/XEPDB1
+    username: billbuddies
+    password: billbuddies_1234
+
+  jpa:
+    database-platform: org.hibernate.dialect.OracleDialect
+    hibernate:
+      ddl-auto: update   # IMPORTANT: Oracle + manual DDL
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          time_zone: UTC
+
+  application:
+    name: billbuddies-backend
+
+server:
+  port: 8080
+  address: 0.0.0.0
+
+centralCounterParty:
+  name: BillBuddy
