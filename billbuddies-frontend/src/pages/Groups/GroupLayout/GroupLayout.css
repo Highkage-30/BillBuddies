@@ -1,0 +1,50 @@
+.group-layout {
+  display: grid;
+  grid-template-columns: 220px 1fr 220px;
+  min-height: calc(100vh - 64px);
+}
+
+/* SIDEBAR */
+.group-sidebar {
+  border-right: 1px solid #e0e0e0;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.group-sidebar a {
+  text-decoration: none;
+  color: #333;
+  padding: 8px 12px;
+  border-radius: 6px;
+}
+
+.group-sidebar a.active {
+  background-color: #e3f2fd;
+  font-weight: 500;
+}
+
+/* CONTENT */
+.group-content {
+  padding: 24px;
+}
+
+/* RIGHT BAR */
+.group-rightbar {
+  border-left: 1px solid #e0e0e0;
+}
+.group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.group-title {
+  font-weight: 600;
+}
+
+.group-description {
+  max-width: 50%;
+  text-align: right;
+}

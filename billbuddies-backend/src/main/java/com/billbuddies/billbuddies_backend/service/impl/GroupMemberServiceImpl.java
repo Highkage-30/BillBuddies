@@ -78,16 +78,12 @@ public class GroupMemberServiceImpl implements GroupMemberService {
                 .orElseThrow(() ->
                         new GroupNotFoundException("Group not found for id: " + groupId)
                 );
-
-        // 2️⃣ Normalize member name
-
-        // 3️⃣ Find or create member (NO lambda misuse)
-        Member member;
         boolean created;
 
         Optional<Member> existingMember =
                 memberRepository.findByMemberNameIgnoreCase(normalizedName);
 
+        Member member;
         if (existingMember.isPresent()) {
             member = existingMember.get();
             created = false;

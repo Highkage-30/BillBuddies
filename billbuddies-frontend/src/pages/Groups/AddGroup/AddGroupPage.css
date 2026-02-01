@@ -1,0 +1,42 @@
+.add-group-page {
+  padding-top: 32px;
+  max-width: 900px;
+}
+
+.add-group-panel {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background-color: #ffffff;
+}
+
+.add-group-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.add-group-row {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 16px;
+  padding: 16px 20px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.add-group-row label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  align-self: center;
+}
+
+.add-group-footer {
+  padding: 16px 20px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.field-error {
+  color: #d32f2f;
+  font-size: 12px;
+  margin-top: 4px;
+}

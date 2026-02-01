@@ -21,7 +21,6 @@ public class MemberServiceImpl implements MemberService {
     @Transactional(readOnly = true)
     @Override
     public List<MemberResponseDto> getAllMembers() {
-
         log.info("Fetching all members");
         return memberRepository.findByMemberNameIgnoreCaseNotOrderByMemberNameAsc(CCP_NAME)
                 .stream()

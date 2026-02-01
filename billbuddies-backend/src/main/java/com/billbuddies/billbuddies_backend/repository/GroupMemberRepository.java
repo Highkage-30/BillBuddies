@@ -14,4 +14,5 @@ public interface GroupMemberRepository
     boolean existsByGroup_GroupIdAndMember_MemberId(Long groupId, Long memberId);
 
     Optional<GroupMember> findByGroup_GroupIdAndMember_MemberId(Long groupId, Long memberId);
+    List<GroupMember> findByMember_MemberId(Long  memberId);
 }

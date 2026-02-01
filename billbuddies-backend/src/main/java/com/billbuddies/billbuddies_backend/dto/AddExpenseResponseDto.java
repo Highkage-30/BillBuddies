@@ -5,7 +5,8 @@ import lombok.Data;
 
 @Data
 @AllArgsConstructor
-public class ApiResponseDto {
-    private boolean success;
-    private String message;
+public class AddExpenseResponseDto {
+    private Long originalExpenseId;
+    private Long groupId;
+    private String status;
 }

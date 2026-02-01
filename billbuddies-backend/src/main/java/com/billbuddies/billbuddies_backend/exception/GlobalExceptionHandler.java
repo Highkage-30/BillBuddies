@@ -1,11 +1,17 @@
 package com.billbuddies.billbuddies_backend.exception;
 
 import com.billbuddies.billbuddies_backend.dto.ErrorResponseDto;
+import com.billbuddies.billbuddies_backend.dto.ValidationErrorResponseDto;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @Slf4j
 @RestControllerAdvice
@@ -78,11 +84,11 @@ public class GlobalExceptionHandler {
                         ex.getMessage()
                 ));
     }
-    @ExceptionHandler(CcpCannotBeAddedException.class)
-    public ResponseEntity<ErrorResponseDto> handleCcpCannotBeAdded(
-            CcpCannotBeAddedException ex) {
+    @ExceptionHandler(CcpCannotBeRemovedException.class)
+    public ResponseEntity<ErrorResponseDto> handleCcpCannotBeRemoved(
+            CcpCannotBeRemovedException ex) {
 
-        log.warn("CcpCannotBeAddedException handled: {}", ex.getMessage());
+        log.warn("CcpCannotBeRemovedException handled: {}", ex.getMessage());
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(new ErrorResponseDto(
@@ -90,12 +96,28 @@ public class GlobalExceptionHandler {
                         ex.getMessage()
                 ));
     }
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ValidationErrorResponseDto> handleValidationErrors(
+            MethodArgumentNotValidException ex
+    ) {
+        Map<String, String> errors = new HashMap<>();
 
-    @ExceptionHandler(CcpCannotBeRemovedException.class)
-    public ResponseEntity<ErrorResponseDto> handleCcpCannotBeRemoved(
-            CcpCannotBeRemovedException ex) {
+        for (FieldError fieldError : ex.getBindingResult().getFieldErrors()) {
+            errors.put(fieldError.getField(), fieldError.getDefaultMessage());
+        }
 
-        log.warn("CcpCannotBeRemovedException handled: {}", ex.getMessage());
+        log.warn("Validation failed: {}", errors);
+
+        return ResponseEntity
+                .badRequest()
+                .body(new ValidationErrorResponseDto(400, errors));
+    }
+
+    @ExceptionHandler(CcpCannotBeAddedException.class)
+    public ResponseEntity<ErrorResponseDto> handleCcpCannotBeAdded(
+            CcpCannotBeAddedException ex) {
+
+        log.warn("CcpCannotBeAddedException handled: {}", ex.getMessage());
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(new ErrorResponseDto(

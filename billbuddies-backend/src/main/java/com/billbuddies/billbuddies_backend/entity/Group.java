@@ -9,7 +9,7 @@ import java.util.Set;
 
 @Entity
 @Table(
-        name = "\"group\"",
+        name = "group_info",
         indexes = @Index(columnList = "group_name")
 )
 @Getter
