@@ -14,9 +14,12 @@ export const fetchGroupStatement = async (groupId) => {
   return res.data;
 };
 
-export const addMemberToGroup = async (groupId, payload) => {
+export const addMembersToGroupBulk = async (
+  groupId,
+  memberNames
+) => {
   return axiosInstance.post(
     `/groups/${groupId}/members`,
-    payload
+    { memberNames }
   );
 };

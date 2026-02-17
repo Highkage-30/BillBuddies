@@ -1,43 +1,34 @@
 package com.billbuddies.billbuddies_backend.controller;
 
-import com.billbuddies.billbuddies_backend.dto.*;
+import com.billbuddies.billbuddies_backend.dto.AddGroupMembersRequestDto;
+import com.billbuddies.billbuddies_backend.dto.GroupMemberResponseDto;
 import com.billbuddies.billbuddies_backend.service.GroupMemberService;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@Slf4j
 @RestController
+@RequestMapping("/api/v1/groups/{groupId}/members")
 @RequiredArgsConstructor
-@RequestMapping("/api/v1")
+@Slf4j
 public class GroupMemberController {
 
     private final GroupMemberService groupMemberService;
 
-    @GetMapping("/groups/{groupId}/members")
-    public List<GroupMemberResponseDto> getMembersByGroupId(
+    @GetMapping
+    public List<GroupMemberResponseDto> getGroupMembers(
             @PathVariable Long groupId
     ) {
-        return groupMemberService.getMembersByGroupId(groupId);
+        log.info("GET /api/v1/groups/{}/members called", groupId);
+        return groupMemberService.getGroupMembers(groupId);
     }
-
-    @PostMapping("/groups/{groupId}/members")
-    @ResponseStatus(HttpStatus.CREATED)
-    public AddMemberResponseDto addMemberToGroup(
-            @PathVariable Long groupId,
-            @RequestBody @Valid AddMemberRequestDto request
+    @PostMapping
+    public void getGroupMembers(
+            @PathVariable Long groupId,@RequestBody AddGroupMembersRequestDto request
     ) {
-        return groupMemberService.addMemberToGroup(groupId, request.getMemberName());
-    }
-
-    @DeleteMapping("/groups/{groupId}/members/{memberId}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public Void deleteMemberFromGroup(@PathVariable Long groupId, @PathVariable Long memberId) {
-        groupMemberService.removeMemberFromGroup(groupId, memberId);
-        return null;
+        log.info("GET /api/v1/groups/{}/members called", groupId);
+        groupMemberService.addMembers(groupId,request);
     }
 }

@@ -3,6 +3,7 @@ import { Outlet, useLocation, useParams } from "react-router-dom";
 import { Typography, CircularProgress } from "@mui/material";
 import GroupSidebar from "./GroupSidebar";
 import GroupHeader from "./GroupHeader";
+import ExpenseTemplatePanel from "../components/ExpenseTemplatePanel";
 import { fetchGroups } from "../../../api/groupApi";
 import "./GroupLayout.css";
 
@@ -59,7 +60,10 @@ function GroupLayout() {
         <Outlet context={{ group }} />
       </div>
 
-      <div className="group-rightbar"></div>
+      {/* RIGHT SIDEBAR */}
+      <div className="group-rightbar">
+        <ExpenseTemplatePanel />
+      </div>
     </div>
   );
 }

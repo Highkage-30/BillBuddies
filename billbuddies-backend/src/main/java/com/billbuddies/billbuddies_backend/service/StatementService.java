@@ -1,10 +1,8 @@
 package com.billbuddies.billbuddies_backend.service;
 
-import com.billbuddies.billbuddies_backend.dto.StatementResponseDto;
-
-import java.util.List;
+import com.billbuddies.billbuddies_backend.dto.GroupStatementResponseDto;
 
 public interface StatementService {
 
-    List<StatementResponseDto> getGroupStatement(Long groupId);
+    GroupStatementResponseDto getGroupStatement(Long groupId);
 }

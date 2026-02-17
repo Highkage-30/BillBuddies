@@ -10,7 +10,7 @@ import AddMembersPanel from "./AddMembersPanel";
 import {
   fetchGroupMembers,
   fetchGroupStatement,
-  addMemberToGroup,
+  addMembersToGroupBulk,
 } from "../../../api/groupMemberApi";
 import { fetchMembers } from "../../../api/memberApi";
 import "./GroupMembers.css";
@@ -29,36 +29,40 @@ function GroupMembersPage() {
 
   const loadAll = async () => {
     try {
-      // 1️⃣ Fetch global members
-      const globalMembers = await fetchMembers();
+      /* 1️⃣ Global members */
+      const globalMembers = await fetchMembers(); // [{id,name}]
       const globalNames = globalMembers.map(
         (m) => m.memberName
       );
 
-      // 2️⃣ Fetch group members
+      /* 2️⃣ Group members */
       const groupMembers =
-        await fetchGroupMembers(groupId);
+        await fetchGroupMembers(groupId); // [{id,name}]
       const groupNames = groupMembers.map(
         (m) => m.memberName
       );
 
-      // 3️⃣ Fetch statement
-      const statement =
+      /* 3️⃣ Statement (IMPORTANT FIX) */
+      const statementRes =
         await fetchGroupStatement(groupId);
 
-      const statementMap = {};
-      statement.forEach((s) => {
-        statementMap[s.memberName] = s.balance;
+      const statementMembers =
+        statementRes.members || [];
+
+      const balanceMap = {};
+      statementMembers.forEach((m) => {
+        balanceMap[m.memberName] = m.balance;
       });
 
-      // 4️⃣ Merge group members + balance
+      /* 4️⃣ Merge members + balance */
       const merged = groupMembers.map((m) => ({
+        memberId: m.memberId,
         memberName: m.memberName,
         balance:
-          statementMap[m.memberName] ?? null,
+          balanceMap[m.memberName] ?? null,
       }));
 
-      // 5️⃣ Compute available members (IMPORTANT)
+      /* 5️⃣ Available members */
       const filteredAvailable = globalNames.filter(
         (name) => !groupNames.includes(name)
       );
@@ -75,20 +79,20 @@ function GroupMembersPage() {
     }
   };
 
-  const handleAddMembers = async (names) => {
+    const handleAddMembers = async (names) => {
     try {
-      for (const name of names) {
-        await addMemberToGroup(groupId, {
-          memberName: name,
-        });
+      if (!Array.isArray(names) || names.length === 0) {
+        return;
       }
+
+      await addMembersToGroupBulk(groupId, names);
 
       setToast({
         type: "success",
         msg: "Members added successfully",
       });
 
-      loadAll(); // refresh lists
+      loadAll();
     } catch (err) {
       setToast({
         type: "error",
@@ -99,17 +103,18 @@ function GroupMembersPage() {
     }
   };
 
+
   return (
     <Container className="group-members-container">
-      {/* Existing group members */}
+      {/* Existing members */}
       {members.map((m) => (
         <GroupMemberItem
-          key={m.memberName}
+          key={m.memberId}
           member={m}
         />
       ))}
 
-      {/* Add new members */}
+      {/* Add members */}
       <AddMembersPanel
         options={availableMembers}
         onSubmit={handleAddMembers}

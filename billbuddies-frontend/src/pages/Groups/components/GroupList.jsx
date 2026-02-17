@@ -1,17 +1,17 @@
-import { List } from "@mui/material";
 import GroupItem from "./GroupItem";
-import "./GroupList.css";
 
-function GroupList({ groups }) {
+function GroupList({ groups, onDelete, onOpen }) {
   return (
-    <List className="group-list">
+    <>
       {groups.map((group) => (
         <GroupItem
           key={group.groupId}
           group={group}
+          onDelete={onDelete}
+          onOpen={onOpen}
         />
       ))}
-    </List>
+    </>
   );
 }
 

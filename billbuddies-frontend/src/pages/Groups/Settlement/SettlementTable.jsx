@@ -5,63 +5,40 @@ import {
   TableCell,
   TableBody,
   Button,
-  CircularProgress,
 } from "@mui/material";
 
 function SettlementTable({
   settlements,
-  settlingRowIndex,
   onRowSettle,
+  disabled,
 }) {
   return (
     <Table className="settlement-table">
       <TableHead>
-        <TableRow className="settlement-header-row">
-          <TableCell className="settlement-header-cell">
-            From
-          </TableCell>
-          <TableCell className="settlement-header-cell">
-            To
-          </TableCell>
-          <TableCell className="settlement-header-cell">
-            Amount
-          </TableCell>
-          <TableCell className="settlement-header-cell">
-            Action
-          </TableCell>
+        <TableRow>
+          <TableCell>From</TableCell>
+          <TableCell>To</TableCell>
+          <TableCell>Amount</TableCell>
+          <TableCell>Action</TableCell>
         </TableRow>
       </TableHead>
 
       <TableBody>
-        {settlements.map((row, index) => (
+        {settlements.map((row) => (
           <TableRow
-            key={`${row.fromMemberName}-${row.toMemberName}`}
-            className="settlement-body-row"
+            key={`${row.fromMemberId}-${row.toMemberId}`}
           >
-            <TableCell className="settlement-cell">
-              {row.fromMemberName}
-            </TableCell>
-
-            <TableCell className="settlement-cell">
-              {row.toMemberName}
-            </TableCell>
-
-            <TableCell className="settlement-cell">
-              ₹{row.amount}
-            </TableCell>
-
-            <TableCell className="settlement-cell">
+            <TableCell>{row.fromMemberName}</TableCell>
+            <TableCell>{row.toMemberName}</TableCell>
+            <TableCell>₹{row.amount}</TableCell>
+            <TableCell>
               <Button
                 variant="contained"
                 size="small"
-                disabled={settlingRowIndex === index}
-                onClick={() => onRowSettle(row, index)}
+                disabled={disabled}
+                onClick={() => onRowSettle(row)}
               >
-                {settlingRowIndex === index ? (
-                  <CircularProgress size={18} />
-                ) : (
-                  "Settle"
-                )}
+                Settle
               </Button>
             </TableCell>
           </TableRow>

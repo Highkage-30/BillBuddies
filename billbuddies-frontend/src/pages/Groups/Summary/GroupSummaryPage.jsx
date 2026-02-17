@@ -3,64 +3,182 @@ import {
   Container,
   CircularProgress,
   Alert,
+  Box,
+  Button,
+  Snackbar,
+  Alert as MuiAlert,
+  Typography,
 } from "@mui/material";
+import DownloadIcon from "@mui/icons-material/Download";
 import { useParams } from "react-router-dom";
 import SummaryTable from "./SummaryTable";
-import { fetchGroupStatement } from "../../../api/statementApi";
-import "./Summary.css";
+import {
+  fetchGroupSummary,
+  downloadGroupSummary,
+} from "../../../api/summaryApi";
 
 function GroupSummaryPage() {
   const { groupId } = useParams();
 
-  const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [members, setMembers] = useState(null);
+  const [groupName, setGroupName] = useState("");
   const [error, setError] = useState(null);
+  const [downloading, setDownloading] =
+    useState(false);
+  const [toast, setToast] = useState(null);
 
   useEffect(() => {
-    loadSummary();
+    let alive = true;
+
+    fetchGroupSummary(groupId)
+      .then((res) => {
+        if (!alive) return;
+        setMembers(res.members);
+        setGroupName(res.groupName || "Group");
+      })
+      .catch((err) => {
+        if (!alive) return;
+        setError(
+          err?.response?.data?.message ||
+            "Failed to load summary"
+        );
+      });
+
+    return () => {
+      alive = false;
+    };
   }, [groupId]);
 
-  const loadSummary = async () => {
+  const handleDownload = async () => {
     try {
-      const response = await fetchGroupStatement(groupId);
-      setData(response);
+      setDownloading(true);
+
+      const blob =
+        await downloadGroupSummary(groupId);
+
+      const today = new Date()
+        .toISOString()
+        .split("T")[0];
+
+      const safeGroupName =
+        groupName.replace(/\s+/g, "-");
+
+      const filename =
+        `${safeGroupName}-${today}.xlsx`;
+
+      const url =
+        window.URL.createObjectURL(blob);
+
+      const link =
+        document.createElement("a");
+
+      link.href = url;
+      link.setAttribute("download", filename);
+
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      setToast({
+        type: "success",
+        msg: "Excel report downloaded successfully",
+      });
     } catch (err) {
-      setError(
-        err?.response?.data?.message ||
-          "Failed to load group summary"
-      );
+      setToast({
+        type: "error",
+        msg:
+          err?.response?.data?.message ||
+          "Failed to download report",
+      });
     } finally {
-      setLoading(false);
+      setDownloading(false);
     }
   };
 
-  if (loading) {
+  if (error) {
     return (
-      <Container className="summary-loading">
+      <Container>
+        <Alert severity="error">{error}</Alert>
+      </Container>
+    );
+  }
+
+  if (members === null) {
+    return (
+      <Container>
         <CircularProgress />
       </Container>
     );
   }
 
-  if (error) {
-    return (
-      <Alert severity="error">
-        {error}
-      </Alert>
-    );
-  }
-
-  if (data.length === 0) {
-    return (
-      <Alert severity="info">
-        No summary available for this group.
-      </Alert>
-    );
-  }
+  const noData =
+    !members || members.length === 0;
 
   return (
-    <Container className="summary-container">
-      <SummaryTable data={data} />
+    <Container>
+
+      {/* HEADER ROW */}
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
+        mb={2}
+      >
+        <Typography variant="h6">
+          Group Summary
+        </Typography>
+
+        <Button
+          variant="contained"
+          color="success"
+          startIcon={
+            downloading ? (
+              <CircularProgress
+                size={18}
+                color="inherit"
+              />
+            ) : (
+              <DownloadIcon />
+            )
+          }
+          onClick={handleDownload}
+          disabled={downloading || noData}
+          sx={{
+            textTransform: "none",
+            fontWeight: 600,
+            boxShadow: 2,
+          }}
+        >
+          {downloading
+            ? "Generating..."
+            : "Download Report"}
+        </Button>
+      </Box>
+
+      {/* SUMMARY TABLE */}
+      {noData ? (
+        <Alert severity="info">
+          No summary data available
+        </Alert>
+      ) : (
+        <SummaryTable data={members} />
+      )}
+
+      {/* TOAST */}
+      {toast && (
+        <Snackbar
+          open
+          autoHideDuration={4000}
+          onClose={() => setToast(null)}
+        >
+          <MuiAlert
+            severity={toast.type}
+            variant="filled"
+          >
+            {toast.msg}
+          </MuiAlert>
+        </Snackbar>
+      )}
     </Container>
   );
 }

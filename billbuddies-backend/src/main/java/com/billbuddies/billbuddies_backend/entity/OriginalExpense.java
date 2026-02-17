@@ -11,10 +11,10 @@ import java.time.LocalDateTime;
 @Table(
         name = "original_expense",
         indexes = {
-                @Index(name = "idx_oe_group", columnList = "group_id"),
-                @Index(name = "idx_oe_paid_by", columnList = "paid_by_name"),
-                @Index(name = "idx_oe_paid_to", columnList = "paid_to_name"),
-                @Index(name = "idx_oe_group_date", columnList = "group_id, expense_date")
+                @Index(name = "idx_expense_group", columnList = "group_id"),
+                @Index(name = "idx_expense_paid_by", columnList = "paid_by_name"),
+                @Index(name = "idx_expense_paid_to", columnList = "paid_to_name"),
+                @Index(name = "idx_expense_group_date", columnList = "group_id, expense_date")
         }
 )
 @Getter
@@ -37,51 +37,30 @@ public class OriginalExpense {
     @Column(name = "original_expense_id")
     private Long originalExpenseId;
 
-    /**
-     * Group in which expense occurred
-     */
-    @Column(name = "group_id", nullable = false)
-    private Long groupId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "group_id", nullable = false)
+    private GroupInfo group;
 
-    /**
-     * Member who actually paid the money
-     * MUST be a member of the group (validated in service layer)
-     */
     @Column(name = "paid_by_name", nullable = false)
     private String paidByName;
 
-    /**
-     * Can be anyone:
-     * - member
-     * - BillBuddy
-     * - external entity
-     * No FK by design.
-     */
     @Column(name = "paid_to_name", nullable = false)
     private String paidToName;
 
-    @Column(name = "amount", nullable = false, precision = 12, scale = 2)
+    @Column(name = "amount", nullable = false, precision = 15, scale = 2)
     private BigDecimal amount;
 
-    @Column(name = "expense_date")
+    @Column(name = "expense_date", nullable = false)
     private LocalDate expenseDate;
 
-    @Column(name = "description", length = 1000)
+    @Column(name = "description")
     private String description;
 
-    @Column(name = "created_at", updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
     @PrePersist
-    protected void onCreate() {
+    void onCreate() {
         this.createdAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        this.updatedAt = LocalDateTime.now();
     }
 }

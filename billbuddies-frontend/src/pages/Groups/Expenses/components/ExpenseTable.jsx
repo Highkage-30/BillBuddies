@@ -7,7 +7,11 @@ import {
 } from "@mui/material";
 import ExpenseRow from "./ExpenseRow";
 
-function ExpenseTable({ expenses }) {
+function ExpenseTable({
+  expenses,
+  onOpenExpense,
+  onDeleteExpense,
+}) {
   return (
     <Table
       sx={{
@@ -36,6 +40,9 @@ function ExpenseTable({ expenses }) {
           <TableCell sx={headerCellStyle}>
             Date
           </TableCell>
+          <TableCell sx={headerCellStyle}>
+            Action
+          </TableCell>
         </TableRow>
       </TableHead>
 
@@ -44,6 +51,8 @@ function ExpenseTable({ expenses }) {
           <ExpenseRow
             key={expense.originalExpenseId}
             expense={expense}
+            onOpen={onOpenExpense}
+            onDelete={onDeleteExpense}
           />
         ))}
       </TableBody>

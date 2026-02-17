@@ -5,90 +5,56 @@ import {
   TableCell,
   TableBody,
 } from "@mui/material";
+import SummaryRow from "./SummaryRow";
 
 function SummaryTable({ data }) {
-  const getBalanceStyle = (value) => {
-    if (value > 0) return { color: "#2e7d32", fontWeight: 600 };
-    if (value < 0) return { color: "#d32f2f", fontWeight: 600 };
-    return { color: "#616161", fontWeight: 600 };
-  };
-
-  const getStatus = (value) => {
-    if (value > 0)
-      return { label: "Will Receive", color: "#2e7d32" };
-    if (value < 0)
-      return { label: "Needs to Pay", color: "#d32f2f" };
-    return { label: "Settled", color: "#616161" };
-  };
-
   return (
-    <Table className="summary-table">
+    <Table
+      sx={{
+        border: "1px solid #bdbdbd",
+        borderCollapse: "collapse",
+      }}
+    >
       <TableHead>
-        <TableRow className="summary-header-row">
-          <TableCell className="summary-header-cell">
+        <TableRow
+          sx={{
+            backgroundColor: "#f5f5f5",
+          }}
+        >
+          <TableCell sx={headerCellStyle}>
             Member
           </TableCell>
-          <TableCell className="summary-header-cell">
+          <TableCell sx={headerCellStyle}>
             Total Received
           </TableCell>
-          <TableCell className="summary-header-cell">
+          <TableCell sx={headerCellStyle}>
             Total Paid
           </TableCell>
-          <TableCell className="summary-header-cell">
+          <TableCell sx={headerCellStyle}>
             Net Balance
           </TableCell>
-          <TableCell className="summary-header-cell">
+          <TableCell sx={headerCellStyle}>
             Status
           </TableCell>
         </TableRow>
       </TableHead>
 
       <TableBody>
-        {data.map((row) => {
-          const status = getStatus(row.balance);
-
-          return (
-            <TableRow
-              key={row.memberName}
-              className="summary-body-row"
-            >
-              <TableCell className="summary-cell">
-                {row.memberName}
-              </TableCell>
-
-              <TableCell
-                className="summary-cell"
-                sx={{ color: "#2e7d32" }}
-              >
-                ₹{row.credit}
-              </TableCell>
-
-              <TableCell
-                className="summary-cell"
-                sx={{ color: "#d32f2f" }}
-              >
-                ₹{row.debit}
-              </TableCell>
-
-              <TableCell
-                className="summary-cell"
-                sx={getBalanceStyle(row.balance)}
-              >
-                ₹{row.balance}
-              </TableCell>
-
-              <TableCell
-                className="summary-cell"
-                sx={{ color: status.color, fontWeight: 600 }}
-              >
-                {status.label}
-              </TableCell>
-            </TableRow>
-          );
-        })}
+        {data.map((row) => (
+          <SummaryRow
+            key={row.memberId}
+            row={row}
+          />
+        ))}
       </TableBody>
     </Table>
   );
 }
+
+const headerCellStyle = {
+  fontWeight: 600,
+  color: "#212121",
+  borderRight: "1px solid #bdbdbd",
+};
 
 export default SummaryTable;

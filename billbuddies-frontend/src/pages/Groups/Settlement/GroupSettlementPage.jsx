@@ -4,26 +4,37 @@ import {
   Alert,
   Snackbar,
   Button,
-  Box,
   CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Typography,
+  Box,
 } from "@mui/material";
 import { useParams } from "react-router-dom";
 import SettlementTable from "./SettlementTable";
 import {
   fetchGroupSettlement,
-  addSettlementExpense,
+  executeSettlementRow,
   executeSettlement,
+  downloadSettlementReport,
 } from "../../../api/settlementApi";
 import "./Settlement.css";
 
 function GroupSettlementPage() {
   const { groupId } = useParams();
 
-  const [settlements, setSettlements] = useState([]); // always array
+  const [settlements, setSettlements] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [settlingRowIndex, setSettlingRowIndex] = useState(null);
-  const [globalLoading, setGlobalLoading] = useState(false);
   const [toast, setToast] = useState(null);
+
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [selectedRow, setSelectedRow] = useState(null);
+  const [groupName, setGroupName] = useState("");
+  const [executingGlobal, setExecutingGlobal] = useState(false);
+  const [executingRow, setExecutingRow] = useState(false);
+  const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
     loadSettlement();
@@ -33,9 +44,8 @@ function GroupSettlementPage() {
     try {
       setLoading(true);
       const res = await fetchGroupSettlement(groupId);
-
-      // 🔒 CRITICAL: always extract array
       setSettlements(res.settlements || []);
+      setGroupName(res.groupName || "Group");
     } catch (err) {
       setToast({
         type: "error",
@@ -48,24 +58,84 @@ function GroupSettlementPage() {
     }
   };
 
-  // 🔹 Row-level settle
-  const handleRowSettle = async (row, index) => {
-    try {
-      setSettlingRowIndex(index);
+  /* ---------------- DOWNLOAD REPORT ---------------- */
 
-      // 1️⃣ Add settlement as expense
-      await addSettlementExpense(groupId, {
-        paidByName: row.fromMemberName,
-        paidToName: row.toMemberName,
-        amount: row.amount,
-        expenseDate: new Date().toISOString().slice(0, 10),
-        description: "Settlement via BillBuddy",
+  const handleDownloadReport = async () => {
+    try {
+      setDownloading(true);
+
+      const response = await downloadSettlementReport(groupId);
+
+      const blob = new Blob([response.data], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       });
 
-      // 2️⃣ Execute settlement
-      await executeSettlement(groupId);
+      const url = window.URL.createObjectURL(blob);
 
-      // 3️⃣ Refresh settlement view
+      const link = document.createElement("a");
+      link.href = url;
+
+      const today = new Date().toISOString().split("T")[0];
+      const safeGroupName =
+        groupName.replace(/\s+/g, "-");
+
+      const filename =
+        `Settlement-${safeGroupName}-${today}.xlsx`;
+      link.setAttribute("download", filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      window.URL.revokeObjectURL(url);
+
+      setToast({
+        type: "success",
+        msg: "Settlement report downloaded",
+      });
+    } catch (err) {
+      setToast({
+        type: "error",
+        msg:
+          err?.response?.data?.message ||
+          "Failed to download report",
+      });
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  /* ---------------- ROW LEVEL ---------------- */
+
+  const askConfirmRow = (row) => {
+    setSelectedRow(row);
+    setConfirmOpen(true);
+  };
+
+  const confirmRowSettlement = async () => {
+    if (!selectedRow) return;
+
+    const snapshot = [...settlements];
+
+    setSettlements((prev) =>
+      prev.filter(
+        (r) =>
+          !(
+            r.fromMemberId === selectedRow.fromMemberId &&
+            r.toMemberId === selectedRow.toMemberId
+          )
+      )
+    );
+
+    setConfirmOpen(false);
+    setExecutingRow(true);
+
+    try {
+      await executeSettlementRow(groupId, {
+        fromMemberId: selectedRow.fromMemberId,
+        toMemberId: selectedRow.toMemberId,
+        amount: selectedRow.amount,
+      });
+
       await loadSettlement();
 
       setToast({
@@ -73,6 +143,7 @@ function GroupSettlementPage() {
         msg: "Settlement completed successfully",
       });
     } catch (err) {
+      setSettlements(snapshot);
       setToast({
         type: "error",
         msg:
@@ -80,21 +151,22 @@ function GroupSettlementPage() {
           "Settlement failed",
       });
     } finally {
-      setSettlingRowIndex(null);
+      setExecutingRow(false);
+      setSelectedRow(null);
     }
   };
 
-  // 🔹 Global settlement (always available)
+  /* ---------------- GLOBAL ---------------- */
+
   const handleExecuteSettlement = async () => {
     try {
-      setGlobalLoading(true);
-
+      setExecutingGlobal(true);
       await executeSettlement(groupId);
       await loadSettlement();
 
       setToast({
         type: "success",
-        msg: "Settlement recalculated successfully",
+        msg: "Settlement executed successfully",
       });
     } catch (err) {
       setToast({
@@ -104,7 +176,7 @@ function GroupSettlementPage() {
           "Failed to execute settlement",
       });
     } finally {
-      setGlobalLoading(false);
+      setExecutingGlobal(false);
     }
   };
 
@@ -118,40 +190,77 @@ function GroupSettlementPage() {
 
   return (
     <Container className="settlement-container">
-      {/* Info banner */}
-      <Box className="settlement-info">
-        All settlements are routed via{" "}
-        <strong>BillBuddy (Central Counter Party)</strong>.
-      </Box>
-
-      {/* Settlement content */}
       {settlements.length === 0 ? (
         <Alert severity="info">
-          All balances are currently settled.  
-          You can execute settlement again after adding new expenses.
+          All balances are settled 🎉
         </Alert>
       ) : (
         <SettlementTable
           settlements={settlements}
-          settlingRowIndex={settlingRowIndex}
-          onRowSettle={handleRowSettle}
+          onRowSettle={askConfirmRow}
+          disabled={executingRow || executingGlobal}
         />
       )}
 
-      {/* ✅ ALWAYS VISIBLE */}
-      <Box className="settlement-footer">
+      {/* FOOTER BUTTONS */}
+      <Box
+        className="settlement-footer"
+        display="flex"
+        justifyContent="space-between"
+        mt={3}
+      >
+        <Button
+          variant="outlined"
+          onClick={handleDownloadReport}
+          disabled={settlements.length === 0 || downloading}
+        >
+          {downloading
+            ? "Downloading..."
+            : "Download Settlement Report"}
+        </Button>
+
         <Button
           variant="contained"
-          disabled={globalLoading}
           onClick={handleExecuteSettlement}
+          disabled={executingGlobal}
         >
-          {globalLoading
+          {executingGlobal
             ? "Executing..."
             : "Execute Settlement"}
         </Button>
       </Box>
 
-      {/* Toasts */}
+      {/* CONFIRM MODAL */}
+      <Dialog
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+      >
+        <DialogTitle>Confirm Settlement</DialogTitle>
+        <DialogContent>
+          <Typography>
+            <strong>{selectedRow?.fromMemberName}</strong>{" "}
+            will pay{" "}
+            <strong>{selectedRow?.toMemberName}</strong>
+          </Typography>
+          <Typography mt={1}>
+            Amount: ₹{selectedRow?.amount}
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmOpen(false)}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color="success"
+            onClick={confirmRowSettlement}
+          >
+            Confirm
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* TOAST */}
       {toast && (
         <Snackbar
           open

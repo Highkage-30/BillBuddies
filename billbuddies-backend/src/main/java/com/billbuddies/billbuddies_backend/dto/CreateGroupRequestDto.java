@@ -1,13 +1,16 @@
 package com.billbuddies.billbuddies_backend.dto;
 
-import jakarta.validation.constraints.NotBlank;
-import lombok.Data;
+import lombok.*;
 
 import java.util.List;
 
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class CreateGroupRequestDto {
-    @NotBlank(message = "Group name cannot be empty")
+
     private String groupName;
     private String groupDescription;
     private List<String> memberList;

@@ -3,6 +3,7 @@ import {
   Container,
   Snackbar,
   Alert,
+  
 } from "@mui/material";
 import { useNavigate, useParams } from "react-router-dom";
 import AddExpenseForm from "./AddExpenseForm";
@@ -16,12 +17,14 @@ function AddExpensePage() {
 
   const [members, setMembers] = useState([]);
   const [loadingMembers, setLoadingMembers] = useState(true);
+  
+  const today = new Date().toLocaleDateString("en-CA");
 
   const [values, setValues] = useState({
     paidBy: null,
     paidToName: "",
     amount: "",
-    expenseDate: "",
+    expenseDate: today,
     description: "",
   });
 

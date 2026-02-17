@@ -5,13 +5,12 @@ import com.billbuddies.billbuddies_backend.entity.StatementId;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
-import java.util.Optional;
 
 public interface StatementRepository
         extends JpaRepository<Statement, StatementId> {
 
-    void deleteByGroupId(Long groupId);
+    void deleteByGroup_GroupId(Long groupId);
+    List<Statement> findByGroup_GroupId(Long groupId);
+    List<Statement> findByMember_MemberId(Long memberId);
 
-    List<Statement> findByGroupIdOrderByMemberNameAsc(Long groupId);
-    Optional<Statement> findByGroupIdAndMemberName(Long groupId, String memberName);
 }
