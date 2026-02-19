@@ -6,6 +6,7 @@ import com.billbuddies.billbuddies_backend.service.GroupMemberService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -31,4 +32,10 @@ public class GroupMemberController {
         log.info("GET /api/v1/groups/{}/members called", groupId);
         groupMemberService.addMembers(groupId,request);
     }
+    @PostMapping("/upload")
+    public void uploadGroupMembers(@PathVariable Long groupId, @RequestParam("file") MultipartFile file){
+        log.info("POST /api/v1/groups/{}/members called", groupId);
+        groupMemberService.uploadGroupMembers(groupId,file);
+    }
+
 }

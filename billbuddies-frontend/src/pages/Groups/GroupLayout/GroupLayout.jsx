@@ -4,6 +4,7 @@ import { Typography, CircularProgress } from "@mui/material";
 import GroupSidebar from "./GroupSidebar";
 import GroupHeader from "./GroupHeader";
 import ExpenseTemplatePanel from "../components/ExpenseTemplatePanel";
+import MemberTemplatePanel from "../components/MemberTemplatePanel";
 import { fetchGroups } from "../../../api/groupApi";
 import "./GroupLayout.css";
 
@@ -63,6 +64,7 @@ function GroupLayout() {
       {/* RIGHT SIDEBAR */}
       <div className="group-rightbar">
         <ExpenseTemplatePanel />
+        <MemberTemplatePanel />
       </div>
     </div>
   );

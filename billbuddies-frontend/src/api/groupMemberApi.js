@@ -23,3 +23,17 @@ export const addMembersToGroupBulk = async (
     { memberNames }
   );
 };
+export const uploadGroupMembers = (groupId, file) => {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  return axiosInstance.post(
+    `/groups/${groupId}/members/upload`,
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  );
+};

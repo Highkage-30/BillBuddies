@@ -1,23 +1,31 @@
-import { Box, Button, Typography } from "@mui/material";
+import { Box, Button, Typography, Divider } from "@mui/material";
 import DownloadIcon from "@mui/icons-material/Download";
+import PeopleIcon from "@mui/icons-material/People";
 
-function ExpenseTemplatePanel() {
+function MemberTemplatePanel() {
   return (
     <Box p={2}>
+      {/* HEADER */}
+      <Box display="flex" alignItems="center" gap={1} mb={1}>
+        
       <Typography
         variant="subtitle1"
         fontWeight={600}
         gutterBottom
       >
-        Expense Upload Template Files -
+        Member Upload Template Files -
       </Typography>
+      </Box>
 
+      <Divider sx={{ mb: 2 }} />
+
+      {/* TEMPLATE FILES */}
       <Box display="flex" flexDirection="column" gap={1}>
         <Button
           variant="outlined"
           startIcon={<DownloadIcon />}
           component="a"
-          href="/templates/expense-template-excel.xlsx"
+          href="/templates/member-template-excel.xlsx"
           download
         >
           Download Excel
@@ -27,7 +35,7 @@ function ExpenseTemplatePanel() {
           variant="outlined"
           startIcon={<DownloadIcon />}
           component="a"
-          href="/templates/expense-template-csv.csv"
+          href="/templates/member-template-csv.csv"
           download
         >
           Download CSV
@@ -37,4 +45,4 @@ function ExpenseTemplatePanel() {
   );
 }
 
-export default ExpenseTemplatePanel;
+export default MemberTemplatePanel;

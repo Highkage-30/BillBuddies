@@ -1,9 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   Container,
   Snackbar,
   Alert,
+  Button,
+  Box,
 } from "@mui/material";
+import UploadFileIcon from "@mui/icons-material/UploadFile";
 import { useParams } from "react-router-dom";
 import GroupMemberItem from "./GroupMemberItem";
 import AddMembersPanel from "./AddMembersPanel";
@@ -11,6 +14,7 @@ import {
   fetchGroupMembers,
   fetchGroupStatement,
   addMembersToGroupBulk,
+  uploadGroupMembers,
 } from "../../../api/groupMemberApi";
 import { fetchMembers } from "../../../api/memberApi";
 import "./GroupMembers.css";
@@ -19,9 +23,11 @@ function GroupMembersPage() {
   const { groupId } = useParams();
 
   const [members, setMembers] = useState([]);
-  const [availableMembers, setAvailableMembers] =
-    useState([]);
+  const [availableMembers, setAvailableMembers] = useState([]);
   const [toast, setToast] = useState(null);
+  const [uploading, setUploading] = useState(false);
+
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     loadAll();
@@ -29,20 +35,17 @@ function GroupMembersPage() {
 
   const loadAll = async () => {
     try {
-      /* 1️⃣ Global members */
-      const globalMembers = await fetchMembers(); // [{id,name}]
+      const globalMembers = await fetchMembers();
       const globalNames = globalMembers.map(
         (m) => m.memberName
       );
 
-      /* 2️⃣ Group members */
       const groupMembers =
-        await fetchGroupMembers(groupId); // [{id,name}]
+        await fetchGroupMembers(groupId);
       const groupNames = groupMembers.map(
         (m) => m.memberName
       );
 
-      /* 3️⃣ Statement (IMPORTANT FIX) */
       const statementRes =
         await fetchGroupStatement(groupId);
 
@@ -54,7 +57,6 @@ function GroupMembersPage() {
         balanceMap[m.memberName] = m.balance;
       });
 
-      /* 4️⃣ Merge members + balance */
       const merged = groupMembers.map((m) => ({
         memberId: m.memberId,
         memberName: m.memberName,
@@ -62,7 +64,6 @@ function GroupMembersPage() {
           balanceMap[m.memberName] ?? null,
       }));
 
-      /* 5️⃣ Available members */
       const filteredAvailable = globalNames.filter(
         (name) => !groupNames.includes(name)
       );
@@ -79,11 +80,12 @@ function GroupMembersPage() {
     }
   };
 
-    const handleAddMembers = async (names) => {
+  /* ================= ADD MEMBERS ================= */
+
+  const handleAddMembers = async (names) => {
     try {
-      if (!Array.isArray(names) || names.length === 0) {
+      if (!Array.isArray(names) || names.length === 0)
         return;
-      }
 
       await addMembersToGroupBulk(groupId, names);
 
@@ -103,36 +105,95 @@ function GroupMembersPage() {
     }
   };
 
+  /* ================= UPLOAD MEMBERS ================= */
+
+  const handleUploadClick = () => {
+    fileInputRef.current.click();
+  };
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    try {
+      setUploading(true);
+
+      await uploadGroupMembers(groupId, file);
+
+      setToast({
+        type: "success",
+        msg: "Members uploaded successfully",
+      });
+
+      loadAll();
+    } catch (err) {
+      setToast({
+        type: "error",
+        msg:
+          err?.response?.data?.message ||
+          "Upload failed",
+      });
+    } finally {
+      setUploading(false);
+      e.target.value = null;
+    }
+  };
 
   return (
-    <Container className="group-members-container">
-      {/* Existing members */}
-      {members.map((m) => (
-        <GroupMemberItem
-          key={m.memberId}
-          member={m}
-        />
-      ))}
+  <Container className="group-members-container">
 
-      {/* Add members */}
+    {/* ===== MEMBERS LIST ===== */}
+    {members.map((m) => (
+      <GroupMemberItem
+        key={m.memberId}
+        member={m}
+      />
+    ))}
+
+    {/* ===== ACTION SECTION ===== */}
+    <Box mt={4}>
+
+      {/* Upload Button */}
+      <Box mb={2}>
+        <Button
+          variant="outlined"
+          startIcon={<UploadFileIcon />}
+          onClick={handleUploadClick}
+          disabled={uploading}
+        >
+          {uploading ? "Uploading..." : "Upload Members"}
+        </Button>
+
+        <input
+          type="file"
+          accept=".csv,.xlsx"
+          ref={fileInputRef}
+          style={{ display: "none" }}
+          onChange={handleFileChange}
+        />
+      </Box>
+
+      {/* Add Members Panel (kept full width) */}
       <AddMembersPanel
         options={availableMembers}
         onSubmit={handleAddMembers}
       />
 
-      {toast && (
-        <Snackbar
-          open
-          autoHideDuration={4000}
-          onClose={() => setToast(null)}
-        >
-          <Alert severity={toast.type} variant="filled">
-            {toast.msg}
-          </Alert>
-        </Snackbar>
-      )}
-    </Container>
-  );
+    </Box>
+
+    {toast && (
+      <Snackbar
+        open
+        autoHideDuration={4000}
+        onClose={() => setToast(null)}
+      >
+        <Alert severity={toast.type} variant="filled">
+          {toast.msg}
+        </Alert>
+      </Snackbar>
+    )}
+  </Container>
+);
 }
 
 export default GroupMembersPage;
