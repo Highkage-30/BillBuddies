@@ -1,0 +1,13 @@
+.expense-table-wrapper {
+  margin-top: 16px;
+}
+
+.expense-footer {
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.group-header {
+  margin-bottom: 16px;
+}

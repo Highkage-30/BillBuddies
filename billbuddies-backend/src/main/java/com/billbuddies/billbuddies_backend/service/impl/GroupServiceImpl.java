@@ -1,119 +1,155 @@
 package com.billbuddies.billbuddies_backend.service.impl;
 
 import com.billbuddies.billbuddies_backend.dto.CreateGroupRequestDto;
-import com.billbuddies.billbuddies_backend.dto.CreateGroupResponseDto;
 import com.billbuddies.billbuddies_backend.dto.GroupResponseDto;
-import com.billbuddies.billbuddies_backend.entity.Group;
-import com.billbuddies.billbuddies_backend.entity.GroupMember;
-import com.billbuddies.billbuddies_backend.entity.GroupMemberId;
-import com.billbuddies.billbuddies_backend.entity.Member;
-import com.billbuddies.billbuddies_backend.exception.GroupAlreadyExistsException;
-import com.billbuddies.billbuddies_backend.repository.GroupMemberRepository;
-import com.billbuddies.billbuddies_backend.repository.GroupRepository;
-import com.billbuddies.billbuddies_backend.repository.MemberRepository;
+import com.billbuddies.billbuddies_backend.entity.*;
+import com.billbuddies.billbuddies_backend.exception.BadRequestException;
+import com.billbuddies.billbuddies_backend.exception.ResourceNotFoundException;
+import com.billbuddies.billbuddies_backend.repository.*;
 import com.billbuddies.billbuddies_backend.service.GroupService;
-import com.billbuddies.billbuddies_backend.util.NameNormalizer;
+import jakarta.annotation.Nonnull;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.util.HashSet;
+import java.math.BigDecimal;
 import java.util.List;
-import java.util.Set;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class GroupServiceImpl implements GroupService {
-    private final GroupRepository groupRepository;
-    private final MemberRepository memberRepository;
+
+    private final GroupInfoRepository groupInfoRepository;
     private final GroupMemberRepository groupMemberRepository;
-    @Value("${centralCounterParty.name}")
-    private String CCP_NAME;
+    private final MemberRepository memberRepository;
+    private final MemberTransactionRepository memberTransactionRepository;
+    private final StatementRepository statementRepository;
+    private final OriginalExpenseRepository originalExpenseRepository;
+
+    // 🔹 NEW
+    private final GroupPoolRepository groupPoolRepository;
+    private final PoolTransactionRepository poolTransactionRepository;
+
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public List<GroupResponseDto> getAllGroups() {
-        log.info("getAllGroups()");
-        return groupRepository.findAllByOrderByGroupNameAsc()
+        log.info("Fetching all groups");
+
+        return groupInfoRepository.findAll()
                 .stream()
-                .map(g->new GroupResponseDto(
-                        g.getGroupId(),
-                        g.getGroupName(),
-                        g.getGroupDescription(),
-                        g.getCreatedAt()
-                ))
+                .map(this::toDto)
                 .toList();
     }
 
-    @Transactional
     @Override
-    public CreateGroupResponseDto createGroup(CreateGroupRequestDto request) {
+    @Transactional
+    public GroupResponseDto createGroup(@Nonnull CreateGroupRequestDto request) {
 
-        String normalizedGroupName =
-                NameNormalizer.capitalizeFirstLetter(request.getGroupName());
+        log.info("Creating group with name={}", request.getGroupName());
 
-        log.info("Creating group '{}'", normalizedGroupName);
+        validateRequest(request);
 
-        if (groupRepository.existsByGroupNameIgnoreCase(normalizedGroupName)) {
-            log.warn("Group '{}' already exists", normalizedGroupName);
-            throw new GroupAlreadyExistsException(
-                    "Group already exists with name: " + normalizedGroupName
-            );
-        }
+        // 1️⃣ Create group
+        GroupInfo group = groupInfoRepository.save(
+                GroupInfo.builder()
+                        .groupName(request.getGroupName().trim())
+                        .description(request.getGroupDescription())
+                        .build()
+        );
 
-        Group group = new Group();
-        group.setGroupName(normalizedGroupName);
-        group.setGroupDescription(request.getGroupDescription());
-        group.setCreatedAt(LocalDateTime.now());
+        // 2️⃣ 🔹 CREATE GROUP POOL (NEW)
+        GroupPool pool = groupPoolRepository.save(
+                GroupPool.builder()
+                        .group(group)
+                        .balance(BigDecimal.ZERO)
+                        .build()
+        );
 
-        group = groupRepository.save(group);
+        log.info("Group pool created for groupId={}, poolId={}",
+                group.getGroupId(), pool.getPoolId());
 
-        Set<String> allMembers = new HashSet<>();
-
-        // Always add CCP
-        allMembers.add(CCP_NAME);
-
-        if (request.getMemberList() != null) {
-            request.getMemberList()
-                    .stream()
-                    .map(NameNormalizer::capitalizeFirstLetter)
-                    .filter(name -> !name.isEmpty())
-                    .forEach(allMembers::add);
-        }
-
-        for (String memberName : allMembers) {
+        // 3️⃣ Create / attach members
+        for (String memberName : request.getMemberList()) {
 
             Member member = memberRepository
-                    .findByMemberNameIgnoreCase(memberName)
+                    .findByMemberNameIgnoreCase(memberName.trim())
                     .orElseGet(() -> {
-                        log.info("Creating new member '{}'", memberName);
-                        Member m = new Member();
-                        m.setMemberName(memberName);
-                        return memberRepository.save(m);
+                        log.info("Creating new member={}", memberName);
+                        return memberRepository.save(
+                                Member.builder()
+                                        .memberName(memberName.trim())
+                                        .build()
+                        );
                     });
 
-            GroupMember groupMember = new GroupMember(
-                    new GroupMemberId(group.getGroupId(), member.getMemberId()),
-                    group,
-                    member,
-                    LocalDateTime.now()
-            );
+            GroupMember groupMember = GroupMember.builder()
+                    .id(new GroupMemberId(group.getGroupId(), member.getMemberId()))
+                    .group(group)
+                    .member(member)
+                    .build();
 
             groupMemberRepository.save(groupMember);
-
-            log.debug("Mapped member '{}' to group '{}'",
-                    member.getMemberName(), group.getGroupName());
         }
 
-        log.info("Group '{}' created successfully", group.getGroupName());
+        log.info("Group created successfully with id={}", group.getGroupId());
 
-        return new CreateGroupResponseDto(
-                group.getGroupId(),
-                group.getGroupName(),
-                "CREATED"
-        );
+        return toDto(group);
+    }
+
+    private void validateRequest(CreateGroupRequestDto request) {
+
+        if (request.getGroupName() == null || request.getGroupName().isBlank()) {
+            throw new BadRequestException("Group name must not be empty");
+        }
+
+        if (request.getMemberList() == null || request.getMemberList().isEmpty()) {
+            throw new BadRequestException("Group must have at least one member");
+        }
+    }
+
+    private GroupResponseDto toDto(GroupInfo group) {
+        return GroupResponseDto.builder()
+                .groupId(group.getGroupId())
+                .groupName(group.getGroupName())
+                .groupDescription(group.getDescription())
+                .createdAt(group.getCreatedAt())
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public void deleteGroup(Long groupId) {
+
+        log.info("Deleting groupId={} and all related data", groupId);
+
+        GroupInfo group = groupInfoRepository.findById(groupId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Group not found: " + groupId));
+
+        // 1️⃣ Delete member ledger
+        memberTransactionRepository.deleteByGroup_GroupId(groupId);
+
+        // 2️⃣ Delete statements
+        statementRepository.deleteByGroup_GroupId(groupId);
+
+        // 3️⃣ Delete expenses
+        originalExpenseRepository.deleteByGroup_GroupId(groupId);
+
+        // 4️⃣ Delete pool transactions (NEW)
+//        poolTransactionRepository.deleteByGroup_GroupId(groupId);
+
+        // 5️⃣ Delete group pool (NEW)
+        groupPoolRepository.findByGroup_GroupId(groupId)
+                .ifPresent(groupPoolRepository::delete);
+
+        // 6️⃣ Delete group members
+        groupMemberRepository.deleteByGroup_GroupId(groupId);
+
+        // 7️⃣ Delete group itself
+        groupInfoRepository.delete(group);
+
+        log.info("GroupId={} deleted successfully", groupId);
     }
 }

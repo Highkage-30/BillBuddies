@@ -1,0 +1,62 @@
+.groups-page {
+  padding-top: 32px;
+  max-width: 1100px;
+}
+
+/* PANEL AS FLEX COLUMN */
+.groups-panel {
+  display: flex;
+  flex-direction: column;
+
+  min-height: 500px; /* gives structure even with few items */
+
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+
+  padding: 16px 20px;
+}
+
+/* HEADER */
+.groups-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  padding-bottom: 12px;
+  margin-bottom: 8px;
+
+  border-bottom: 1px solid #ededed;
+}
+
+/* BODY (SCROLLABLE IF NEEDED) */
+.groups-body {
+  flex: 1;                /* pushes footer down */
+  overflow-y: auto;
+}
+
+/* EMPTY STATE */
+.groups-empty {
+  padding: 24px 8px;
+  color: #666;
+}
+
+/* FOOTER (ALWAYS AT BOTTOM) */
+.groups-footer {
+  padding-top: 16px;
+  margin-top: 12px;
+
+  border-top: 1px solid #ededed;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* STATUS / ERROR */
+.groups-status,
+.groups-error {
+  padding: 24px;
+}
+
+.groups-error {
+  color: red;
+}

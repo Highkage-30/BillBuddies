@@ -1,11 +1,14 @@
 package com.billbuddies.billbuddies_backend.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.*;
 
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class GroupMemberResponseDto {
-    private String memberName;
+
     private Long memberId;
+    private String memberName;
 }

@@ -1,6 +1,7 @@
 package com.billbuddies.billbuddies_backend.controller;
 
 import com.billbuddies.billbuddies_backend.dto.MemberResponseDto;
+import com.billbuddies.billbuddies_backend.dto.MemberStatementResponseDto;
 import com.billbuddies.billbuddies_backend.service.MemberService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -9,18 +10,22 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@Slf4j
+@RequestMapping("/api/v1/members")
 @RequiredArgsConstructor
-@RequestMapping("/api/v1")
-@CrossOrigin(
-        origins = "http://192.168.1.5:3000",
-        allowedHeaders = "*",
-        methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE}
-)
+@Slf4j
 public class MemberController {
+
     private final MemberService memberService;
-    @GetMapping("/members")
+
+    @GetMapping
     public List<MemberResponseDto> getAllMembers() {
+        log.info("GET /api/v1/members called");
         return memberService.getAllMembers();
     }
+    @GetMapping("/{memberId}/statement")
+    public MemberStatementResponseDto getStatement(@PathVariable Long memberId) {
+        log.info("GET /api/v1/members/{memberId}/statement called");
+        return memberService.getMemberStatement(memberId);
+    }
+
 }
