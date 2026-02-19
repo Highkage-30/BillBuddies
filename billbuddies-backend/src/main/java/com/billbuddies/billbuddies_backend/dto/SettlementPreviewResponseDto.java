@@ -9,7 +9,9 @@ import java.util.List;
 @Data
 @Builder
 public class SettlementPreviewResponseDto {
+
     private Long groupId;
+    private String groupName;
     private LocalDateTime generatedAt;
-    private List<SettlementPreviewItemDto> settlements;
+    private List<SettlementRowDto> settlements;
 }

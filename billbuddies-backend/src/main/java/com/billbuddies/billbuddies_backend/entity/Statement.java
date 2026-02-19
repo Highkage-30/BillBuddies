@@ -7,38 +7,36 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(
-        name = "statement",
-        indexes = {
-                @Index(name = "idx_stmt_group", columnList = "group_id"),
-                @Index(name = "idx_stmt_member", columnList = "member_name")
-        }
-)
+@Table(name = "statement")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@IdClass(StatementId.class)
 public class Statement {
 
-    @Id
-    @Column(name = "group_id", nullable = false)
-    private Long groupId;
+    @EmbeddedId
+    private StatementId id;
 
-    @Id
-    @Column(name = "member_name", nullable = false)
-    private String memberName;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @MapsId("groupId")
+    @JoinColumn(name = "group_id", nullable = false)
+    private GroupInfo group;
 
-    @Column(name = "credit", precision = 12, scale = 2)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @MapsId("memberId")
+    @JoinColumn(name = "member_id", nullable = false)
+    private Member member;
+
+    @Column(name = "credit", precision = 15, scale = 2)
     private BigDecimal credit;
 
-    @Column(name = "debit", precision = 12, scale = 2)
+    @Column(name = "debit", precision = 15, scale = 2)
     private BigDecimal debit;
 
-    @Column(name = "balance", precision = 12, scale = 2)
+    @Column(name = "balance", precision = 15, scale = 2)
     private BigDecimal balance;
 
-    @Column(name = "settlement_date")
-    private LocalDateTime settlementDate;
+    @Column(name = "generated_at", nullable = false)
+    private LocalDateTime generatedAt;
 }

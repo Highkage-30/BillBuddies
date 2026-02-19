@@ -13,3 +13,25 @@ export const createExpense = async (groupId, payload) => {
   );
   return response.data;
 };
+export const deleteExpense = async (
+  groupId,
+  expenseId
+) => {
+  return axiosInstance.delete(
+    `/groups/${groupId}/expenses/${expenseId}`
+  );
+};
+export const uploadExpensesFile = (groupId, file) => {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  return axiosInstance.post(
+    `/groups/${groupId}/expenses/upload`,
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  );
+};

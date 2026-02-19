@@ -1,189 +1,110 @@
 package com.billbuddies.billbuddies_backend.service.impl;
 
-import com.billbuddies.billbuddies_backend.dto.SettlementPreviewItemDto;
-import com.billbuddies.billbuddies_backend.dto.SettlementPreviewResponseDto;
-import com.billbuddies.billbuddies_backend.entity.SplitExpense;
-import com.billbuddies.billbuddies_backend.entity.Statement;
-import com.billbuddies.billbuddies_backend.repository.FundsObligationRepository;
-import com.billbuddies.billbuddies_backend.repository.GroupMemberRepository;
-import com.billbuddies.billbuddies_backend.repository.SplitExpenseRepository;
-import com.billbuddies.billbuddies_backend.repository.StatementRepository;
+import com.billbuddies.billbuddies_backend.entity.*;
+import com.billbuddies.billbuddies_backend.entity.enums.TransactionDirection;
+import com.billbuddies.billbuddies_backend.exception.ResourceNotFoundException;
+import com.billbuddies.billbuddies_backend.repository.*;
 import com.billbuddies.billbuddies_backend.service.SettlementService;
-import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
+@Slf4j
 public class SettlementServiceImpl implements SettlementService {
 
-    private final SplitExpenseRepository splitExpenseRepository;
-    private final FundsObligationRepository fundsObligationRepository;
-    private final GroupMemberRepository groupMemberRepository;
+    private final GroupInfoRepository groupInfoRepository;
+    private final MemberTransactionRepository memberTransactionRepository;
     private final StatementRepository statementRepository;
-
-    @Value("${centralCounterParty.name}")
-    private String CCP_NAME;
 
     @Override
     @Transactional
     public void settleGroup(Long groupId) {
 
-        statementRepository.deleteByGroupId(groupId);
+        log.info("Running settlement for groupId={}", groupId);
 
-        Map<String, BigDecimal> paid = new HashMap<>();
-        Map<String, BigDecimal> received = new HashMap<>();
+        GroupInfo group = groupInfoRepository.findById(groupId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Group not found with id: " + groupId));
 
-        // init members + CCP
-        groupMemberRepository
-                .findByGroup_GroupIdOrderByMember_MemberNameAsc(groupId)
-                .forEach(gm -> {
-                    paid.put(gm.getMember().getMemberName(), BigDecimal.ZERO);
-                    received.put(gm.getMember().getMemberName(), BigDecimal.ZERO);
-                });
+        // 1️⃣ Fetch ledger
+        List<MemberTransaction> transactions =
+                memberTransactionRepository.findByGroup_GroupId(groupId);
 
-        // SPLIT_EXPENSE → PAID
-        splitExpenseRepository.findByGroupId(groupId)
-                .forEach(se ->
-                        paid.merge(se.getFromName(), se.getAmount(), BigDecimal::add)
-                );
-
-        // FUNDS_OBLIGATION → RECEIVED VALUE
-        fundsObligationRepository.findByGroupId(groupId)
-                .forEach(fo ->
-                        received.merge(
-                                fo.getMember().getMemberName(),
-                                fo.getShareAmount(),
-                                BigDecimal::add
-                        )
-                );
-
-        // BillBuddy received = money coming into CCP
-        BigDecimal ccpIn =
-                splitExpenseRepository.findByGroupId(groupId).stream()
-                        .filter(se -> se.getToName().equalsIgnoreCase(CCP_NAME))
-                        .map(SplitExpense::getAmount)
-                        .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        BigDecimal ccpOut =
-                splitExpenseRepository.findByGroupId(groupId).stream()
-                        .filter(se -> se.getFromName().equalsIgnoreCase(CCP_NAME))
-                        .map(SplitExpense::getAmount)
-                        .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        received.put(CCP_NAME, ccpIn);
-        paid.put(CCP_NAME, ccpOut);
-
-        // Persist statement snapshot
-        for (String member : paid.keySet()) {
-
-            BigDecimal credit = paid.getOrDefault(member, BigDecimal.ZERO);
-            BigDecimal debit = received.getOrDefault(member, BigDecimal.ZERO);
-            BigDecimal net = credit.subtract(debit);
-
-            statementRepository.save(
-                    Statement.builder()
-                            .groupId(groupId)
-                            .memberName(member)
-                            .credit(credit)
-                            .debit(debit)
-                            .balance(net)
-                            .settlementDate(LocalDateTime.now())
-                            .build()
-            );
+        if (transactions.isEmpty()) {
+            log.info("No transactions found for groupId={}, clearing statements", groupId);
+            statementRepository.deleteByGroup_GroupId(groupId);
+            return;
         }
-    }
-    @Override
-    @Transactional(readOnly = true)
-    public SettlementPreviewResponseDto previewSettlement(Long groupId) {
 
-        List<Statement> statements =
-                statementRepository.findByGroupIdOrderByMemberNameAsc(groupId);
+        // 2️⃣ Aggregate credit / debit per member
+        Map<Long, BigDecimal> creditMap = new HashMap<>();
+        Map<Long, BigDecimal> debitMap = new HashMap<>();
 
-        List<BalanceHolder> creditors = new ArrayList<>();
-        List<BalanceHolder> debtors = new ArrayList<>();
+        for (MemberTransaction tx : transactions) {
 
-        /* 1️⃣ Split balances */
-        for (Statement s : statements) {
-            BigDecimal balance = s.getBalance();
+            Long memberId = tx.getMember().getMemberId();
+            BigDecimal amount = tx.getAmount();
 
-            if (balance.compareTo(BigDecimal.ZERO) > 0) {
-                creditors.add(
-                        new BalanceHolder(
-                                s.getMemberName(),
-                                balance
-                        )
+            if (tx.getDirection() == TransactionDirection.CREDIT) {
+                creditMap.put(
+                        memberId,
+                        creditMap.getOrDefault(memberId, BigDecimal.ZERO).add(amount)
                 );
-            } else if (balance.compareTo(BigDecimal.ZERO) < 0) {
-                debtors.add(
-                        new BalanceHolder(
-                                s.getMemberName(),
-                                balance.abs()
-                        )
+            } else {
+                debitMap.put(
+                        memberId,
+                        debitMap.getOrDefault(memberId, BigDecimal.ZERO).add(amount)
                 );
             }
         }
 
-        List<SettlementPreviewItemDto> settlements = new ArrayList<>();
+        // 3️⃣ Overwrite statement table
+        statementRepository.deleteByGroup_GroupId(groupId);
 
-        /* 2️⃣ Two-pointer settlement matching */
-        int i = 0;
-        int j = 0;
+        LocalDateTime now = LocalDateTime.now();
 
-        while (i < debtors.size() && j < creditors.size()) {
+        for (Long memberId : unionKeys(creditMap, debitMap)) {
 
-            BalanceHolder debtor = debtors.get(i);
-            BalanceHolder creditor = creditors.get(j);
+            BigDecimal credit = creditMap.getOrDefault(memberId, BigDecimal.ZERO);
+            BigDecimal debit  = debitMap.getOrDefault(memberId, BigDecimal.ZERO);
+            BigDecimal balance = credit.subtract(debit);
 
-            BigDecimal amount =
-                    debtor.amount.min(creditor.amount);
+            Member member = transactions.stream()
+                    .map(MemberTransaction::getMember)
+                    .filter(m -> m.getMemberId().equals(memberId))
+                    .findFirst()
+                    .orElseThrow(); // logically impossible
 
-            settlements.add(
-                    SettlementPreviewItemDto.builder()
-                            .fromMemberName(debtor.memberName)
-                            .toMemberName(creditor.memberName)
-                            .amount(amount)
-                            .build()
-            );
+            Statement statement = Statement.builder()
+                    .id(new StatementId(groupId, memberId))
+                    .group(group)
+                    .member(member)
+                    .credit(credit)
+                    .debit(debit)
+                    .balance(balance)
+                    .generatedAt(now)
+                    .build();
 
-            debtor.amount = debtor.amount.subtract(amount);
-            creditor.amount = creditor.amount.subtract(amount);
-
-            if (debtor.amount.compareTo(BigDecimal.ZERO) == 0) {
-                i++;
-            }
-            if (creditor.amount.compareTo(BigDecimal.ZERO) == 0) {
-                j++;
-            }
+            statementRepository.save(statement);
         }
 
-        return SettlementPreviewResponseDto.builder()
-                .groupId(groupId)
-                .generatedAt(LocalDateTime.now())
-                .settlements(settlements)
-                .build();
+        log.info("Settlement completed for groupId={}", groupId);
     }
 
-    /* ===============================
-       INTERNAL MUTABLE HOLDER
-       =============================== */
-    @Data
-    @AllArgsConstructor
-    private static class BalanceHolder {
-        private String memberName;
-        private BigDecimal amount;
+    private Set<Long> unionKeys(
+            Map<Long, BigDecimal> creditMap,
+            Map<Long, BigDecimal> debitMap
+    ) {
+        Set<Long> keys = new HashSet<>(creditMap.keySet());
+        keys.addAll(debitMap.keySet());
+        return keys;
     }
-
 
 }

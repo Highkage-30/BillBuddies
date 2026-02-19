@@ -8,3 +8,8 @@ export const createGroup = async (payload) => {
   const response = await axiosInstance.post("/groups", payload);
   return response.data;
 };
+export const deleteGroup = async (groupId) => {
+  return axiosInstance.delete(
+    `/groups/${groupId}`
+  );
+};

@@ -11,6 +11,7 @@ import GroupSummaryPage from "./pages/Groups/Summary/GroupSummaryPage";
 import GroupSettlementPage from "./pages/Groups/Settlement/GroupSettlementPage";
 import GroupMembersPage from "./pages/Groups/Members/GroupMembersPage";
 import MemberDetailPage from "./pages/Members/MemberDetail/MemberDetailPage";
+import PoolPage from "./pages/Groups/Pool/PoolPage";
 function App() {
   return (
     <BrowserRouter>
@@ -27,10 +28,12 @@ function App() {
 
             {/* expenses */}
             <Route path="expense" element={<ExpensesPage />} />
+            {/* <Route path="expense/:expenseId" element={<ExpenseDetailsPage />}/>  */}
             <Route path="expense/new" element={<AddExpensePage />} />
             <Route path="summary" element={<GroupSummaryPage />}/>
             <Route path="settlement" element={<GroupSettlementPage />}/>
             <Route path="members" element={<GroupMembersPage />}/>
+            <Route path="pool" element={<PoolPage />} />
           </Route>
         </Routes>
     </BrowserRouter>

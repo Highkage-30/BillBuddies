@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class GroupMember {
 
     @EmbeddedId
@@ -19,13 +20,18 @@ public class GroupMember {
     @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("groupId")
     @JoinColumn(name = "group_id", nullable = false)
-    private Group group;
+    private GroupInfo group;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("memberId")
     @JoinColumn(name = "member_id", nullable = false)
     private Member member;
 
-    @Column(name = "joined_at")
+    @Column(name = "joined_at", nullable = false)
     private LocalDateTime joinedAt;
+
+    @PrePersist
+    void onJoin() {
+        this.joinedAt = LocalDateTime.now();
+    }
 }

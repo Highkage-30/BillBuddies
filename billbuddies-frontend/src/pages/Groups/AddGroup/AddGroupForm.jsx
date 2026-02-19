@@ -14,6 +14,8 @@ function AddGroupForm({
   selectedMembers,
   errors,
   loading,
+  uploadFile,
+  onFileChange,
   onGroupNameChange,
   onGroupDescriptionChange,
   onMembersChange,
@@ -25,6 +27,7 @@ function AddGroupForm({
         <Typography variant="h5">Add Group</Typography>
       </div>
 
+      {/* Group Name */}
       <div className="add-group-row">
         <label>Group Name</label>
         <TextField
@@ -37,6 +40,7 @@ function AddGroupForm({
         />
       </div>
 
+      {/* Description */}
       <div className="add-group-row">
         <label>Group Description</label>
         <TextField
@@ -49,6 +53,7 @@ function AddGroupForm({
         />
       </div>
 
+      {/* Members */}
       <div className="add-group-row">
         <label>Add Members</label>
         <Box>
@@ -82,6 +87,7 @@ function AddGroupForm({
               />
             )}
           />
+
           {errors.members && (
             <Typography className="field-error">
               {errors.members}
@@ -90,11 +96,51 @@ function AddGroupForm({
         </Box>
       </div>
 
-      <div className="add-group-footer">
-        <Button type="submit" variant="contained" disabled={loading}>
+      {/* Footer Buttons */}
+      <div
+        className="add-group-footer"
+        style={{
+          marginTop: "24px",
+          display: "flex",
+          justifyContent: "flex-end",
+          alignItems: "center",
+          gap: "12px",
+        }}
+      >
+        {/* Upload Button */}
+        <Button
+          variant="outlined"
+          component="label"
+        >
+          Upload Members
+          <input
+            type="file"
+            hidden
+            accept=".csv,.xlsx"
+            onChange={onFileChange}
+          />
+        </Button>
+
+        {/* Add Group Button */}
+        <Button
+          type="submit"
+          variant="contained"
+          disabled={loading}
+        >
           {loading ? "Creating..." : "Add Group"}
         </Button>
       </div>
+
+      {/* Selected File Display */}
+      {uploadFile && (
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          sx={{ mt: 1 }}
+        >
+          Selected file: {uploadFile.name}
+        </Typography>
+      )}
     </form>
   );
 }

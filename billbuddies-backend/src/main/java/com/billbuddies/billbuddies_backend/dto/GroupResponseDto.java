@@ -1,13 +1,16 @@
 package com.billbuddies.billbuddies_backend.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class GroupResponseDto {
+
     private Long groupId;
     private String groupName;
     private String groupDescription;

@@ -6,11 +6,14 @@ function GroupSidebar() {
 
   return (
     <div className="group-sidebar">
-      <NavLink to={`/groups/${groupId}/expense`} end>
+      <NavLink to={`/groups/${groupId}/expense`}end>
         Expenses
       </NavLink>
       <NavLink to={`/groups/${groupId}/members`}>
         Members
+      </NavLink>
+      <NavLink to={`/groups/${groupId}/pool`}>
+        Pool
       </NavLink>
       <NavLink to={`/groups/${groupId}/settlement`}>
         Settlement
